@@ -92,7 +92,7 @@ const Navbar = () => {
               </a>
             ))}
             <a
-              href="#cta-final"
+              href="/signup"
               onClick={() => setMenuOpen(false)}
               className="mt-6 rounded-full bg-primary text-primary-foreground px-5 py-3 text-center text-sm font-medium"
             >
