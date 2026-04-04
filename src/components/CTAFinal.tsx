@@ -30,7 +30,7 @@ const CTAFinal = () => {
           transition={{ delay: 0.3 }}
         >
           <a
-            href="#"
+            href="/signup"
             className="inline-block rounded-full bg-background text-primary px-8 py-4 font-heading font-bold text-lg hover:opacity-90 transition-opacity"
           >
             Crear mi primer anuncio gratis →

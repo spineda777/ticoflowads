@@ -34,7 +34,7 @@ const HeroSection = () => (
 
           <motion.div {...fadeUp(0.3)} className="flex flex-wrap gap-4 mb-4">
             <a
-              href="#cta-final"
+              href="/signup"
               className="rounded-full bg-primary text-primary-foreground px-7 py-3 font-medium hover:bg-secondary transition-colors animate-pulse"
             >
               Crear mi primer anuncio gratis →
