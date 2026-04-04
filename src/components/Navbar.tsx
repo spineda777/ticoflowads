@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ticoflowLogo from "@/assets/ticoflow-logo.png";
+
 
 const navLinks = [
   { label: "Cómo funciona", href: "#como-funciona" },
@@ -29,7 +29,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 font-heading font-bold text-xl text-primary">
-          <img src={ticoflowLogo} alt="TicoFlow logo" className="h-8 w-8 rounded-full object-cover" />
+          <img src="/5da9c6eb-3bed-45d2-89f7-f648023bbeca.png" alt="TicoFlow logo" className="h-8 w-8 rounded-full object-cover" />
           TicoFlowAds<span className="text-accent">.ia</span>
         </a>
 
