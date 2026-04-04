@@ -29,7 +29,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 font-heading font-bold text-primary text-3xl">
-          <img src="/5da9c6eb-3bed-45d2-89f7-f648023bbeca.png" alt="TicoFlow logo" className="h-8 w-8 rounded-full object-cover" />
+          <img src="/1271b83a-0395-4be9-b610-0e51b2921ae6.png" alt="TicoFlow logo" className="h-8 w-8 rounded-full object-cover" />
           TicoFlowAds<span className="text-accent">.ia</span>
         </a>
 
