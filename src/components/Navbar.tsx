@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ticoflowLogo from "@/assets/ticoflow-logo.png";
+
 
 const navLinks = [
   { label: "Cómo funciona", href: "#como-funciona" },
