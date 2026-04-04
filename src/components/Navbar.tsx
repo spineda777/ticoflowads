@@ -48,7 +48,7 @@ const Navbar = () => {
 
         {/* Desktop CTA */}
         <a
-          href="#cta-final"
+          href="/signup"
           className="hidden md:inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-5 py-2 text-sm font-medium hover:bg-secondary transition-colors"
         >
           Empieza gratis →
@@ -92,7 +92,7 @@ const Navbar = () => {
               </a>
             ))}
             <a
-              href="#cta-final"
+              href="/signup"
               onClick={() => setMenuOpen(false)}
               className="mt-6 rounded-full bg-primary text-primary-foreground px-5 py-3 text-center text-sm font-medium"
             >
