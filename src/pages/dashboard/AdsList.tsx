@@ -59,11 +59,9 @@ const AdsList = () => {
                     }`}>
                       {statusLabel[ad.status] || ad.status}
                     </span>
-                    {ad.status === "ready" && (
-                      <Button size="sm" onClick={() => handlePublish(ad.id)}>
-                        <Send className="h-3 w-3 mr-1" />Publicar
-                      </Button>
-                    )}
+                    <Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/ads/${ad.id}`)}>
+                      <ExternalLink className="h-3 w-3 mr-1" />Ver detalle
+                    </Button>
                   </div>
                 </div>
               </CardContent>

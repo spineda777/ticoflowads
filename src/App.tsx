@@ -51,6 +51,7 @@ const App = () => (
               <Route index element={<DashboardHome />} />
               <Route path="new-ad" element={<NewAd />} />
               <Route path="ads" element={<AdsList />} />
+              <Route path="ads/:id" element={<AdDetail />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="billing" element={<BillingPage />} />
