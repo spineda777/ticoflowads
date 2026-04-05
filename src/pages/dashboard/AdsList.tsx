@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 const AdsList = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [ads, setAds] = useState<any[]>([]);
 
   useEffect(() => {
