@@ -18,24 +18,6 @@ const AdsList = () => {
     supabase.from("ads").select("*").order("created_at", { ascending: false }).then(({ data }) => setAds(data || []));
   }, [user]);
 
-  const handlePublish = async (adId: string) => {
-    await supabase.from("ads").update({
-      status: "pending_publish",
-      meta_campaign_id: `sim_campaign_${Date.now()}`,
-      meta_adset_id: `sim_adset_${Date.now()}`,
-      meta_ad_id: `sim_ad_${Date.now()}`,
-    }).eq("id", adId);
-
-    // Simulate publish after 2s
-    setTimeout(async () => {
-      await supabase.from("ads").update({ status: "published" }).eq("id", adId);
-      setAds((prev) => prev.map((a) => a.id === adId ? { ...a, status: "published" } : a));
-      toast({ title: "Anuncio publicado" });
-    }, 2000);
-
-    setAds((prev) => prev.map((a) => a.id === adId ? { ...a, status: "pending_publish" } : a));
-  };
-
   const statusLabel: Record<string, string> = {
     generating: "Generando...",
     ready: "Listo",
