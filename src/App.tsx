@@ -17,6 +17,7 @@ import Onboarding from "./pages/Onboarding.tsx";
 import DashboardHome from "./pages/dashboard/DashboardHome.tsx";
 import NewAd from "./pages/dashboard/NewAd.tsx";
 import AdsList from "./pages/dashboard/AdsList.tsx";
+import AdDetail from "./pages/dashboard/AdDetail.tsx";
 import SettingsPage from "./pages/dashboard/SettingsPage.tsx";
 import TeamPage from "./pages/dashboard/TeamPage.tsx";
 import BillingPage from "./pages/dashboard/BillingPage.tsx";
@@ -50,6 +51,7 @@ const App = () => (
               <Route index element={<DashboardHome />} />
               <Route path="new-ad" element={<NewAd />} />
               <Route path="ads" element={<AdsList />} />
+              <Route path="ads/:id" element={<AdDetail />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="billing" element={<BillingPage />} />

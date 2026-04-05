@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_images: {
+        Row: {
+          ad_id: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          prompt: string | null
+          selected: boolean | null
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          prompt?: string | null
+          selected?: boolean | null
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          prompt?: string | null
+          selected?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_images_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           ad_body: string | null
@@ -28,9 +63,11 @@ export type Database = {
           meta_ad_id: string | null
           meta_adset_id: string | null
           meta_campaign_id: string | null
+          published_at: string | null
           spend: number
           status: string
           suggested_targeting: string | null
+          targeting: Json | null
           tenant_id: string
           user_id: string
         }
@@ -47,9 +84,11 @@ export type Database = {
           meta_ad_id?: string | null
           meta_adset_id?: string | null
           meta_campaign_id?: string | null
+          published_at?: string | null
           spend?: number
           status?: string
           suggested_targeting?: string | null
+          targeting?: Json | null
           tenant_id: string
           user_id: string
         }
@@ -66,9 +105,11 @@ export type Database = {
           meta_ad_id?: string | null
           meta_adset_id?: string | null
           meta_campaign_id?: string | null
+          published_at?: string | null
           spend?: number
           status?: string
           suggested_targeting?: string | null
+          targeting?: Json | null
           tenant_id?: string
           user_id?: string
         }

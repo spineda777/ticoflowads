@@ -4,35 +4,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, MousePointerClick, DollarSign, Send } from "lucide-react";
+import { Eye, MousePointerClick, DollarSign, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdsList = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [ads, setAds] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
     supabase.from("ads").select("*").order("created_at", { ascending: false }).then(({ data }) => setAds(data || []));
   }, [user]);
-
-  const handlePublish = async (adId: string) => {
-    await supabase.from("ads").update({
-      status: "pending_publish",
-      meta_campaign_id: `sim_campaign_${Date.now()}`,
-      meta_adset_id: `sim_adset_${Date.now()}`,
-      meta_ad_id: `sim_ad_${Date.now()}`,
-    }).eq("id", adId);
-
-    // Simulate publish after 2s
-    setTimeout(async () => {
-      await supabase.from("ads").update({ status: "published" }).eq("id", adId);
-      setAds((prev) => prev.map((a) => a.id === adId ? { ...a, status: "published" } : a));
-      toast({ title: "Anuncio publicado" });
-    }, 2000);
-
-    setAds((prev) => prev.map((a) => a.id === adId ? { ...a, status: "pending_publish" } : a));
-  };
 
   const statusLabel: Record<string, string> = {
     generating: "Generando...",
@@ -75,11 +59,9 @@ const AdsList = () => {
                     }`}>
                       {statusLabel[ad.status] || ad.status}
                     </span>
-                    {ad.status === "ready" && (
-                      <Button size="sm" onClick={() => handlePublish(ad.id)}>
-                        <Send className="h-3 w-3 mr-1" />Publicar
-                      </Button>
-                    )}
+                    <Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/ads/${ad.id}`)}>
+                      <ExternalLink className="h-3 w-3 mr-1" />Ver detalle
+                    </Button>
                   </div>
                 </div>
               </CardContent>

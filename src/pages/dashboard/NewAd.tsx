@@ -93,8 +93,8 @@ const NewAd = () => {
 
       if (fnError) throw fnError;
 
-      toast({ title: "¡Anuncio generado!", description: "Tu anuncio está listo para revisar." });
-      navigate("/dashboard/ads");
+      toast({ title: "¡Anuncio generado!", description: "Ahora genera imágenes y segmentación." });
+      navigate(`/dashboard/ads/${ad.id}`);
     } catch (err: any) {
       await supabase.from("ads").update({ status: "error", error_message: err.message }).eq("id", ad.id);
       toast({ title: "Error al generar", description: err.message, variant: "destructive" });
