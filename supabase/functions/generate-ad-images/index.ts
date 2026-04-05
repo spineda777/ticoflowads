@@ -10,12 +10,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ad_id, business_type, description, target_audience } = await req.json();
+    const { ad_id, business_type, description, target_audience, reference_images, style_instructions } = await req.json();
 
     if (!ad_id) {
       return new Response(JSON.stringify({ error: "ad_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -26,18 +25,39 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const hasReferences = reference_images && reference_images.length > 0;
+    const styleNote = style_instructions ? ` Style: ${style_instructions}.` : "";
+
+    const baseContext = `Business type: ${business_type || "business"}. ${description || ""}. Target: ${target_audience || "general audience"}.${styleNote}`;
+
     const imagePrompts = [
-      `Professional social media ad for a ${business_type || "business"}. ${description || ""}. Target: ${target_audience || "general audience"}. Modern, vibrant, clean, commercial quality, bright colors, high resolution.`,
-      `Eye-catching promotional banner for ${business_type || "business"}. ${description || ""}. Lifestyle shot, warm lighting, inviting, professional photography style.`,
-      `Bold advertising creative for ${business_type || "business"}. ${description || ""}. Minimalist design, strong typography space, premium feel, social media optimized.`,
-      `Dynamic promotional image for ${business_type || "business"}. ${description || ""}. Action-oriented, energetic, colorful, modern graphic design style.`,
-      `Elegant brand advertisement for ${business_type || "business"}. ${description || ""}. Sophisticated, clean background, product-focused, Instagram-ready.`,
+      `Professional social media ad. ${baseContext} Modern, vibrant, clean, commercial quality, high resolution.`,
+      `Eye-catching promotional banner. ${baseContext} Lifestyle shot, warm lighting, inviting, professional photography style.`,
+      `Bold advertising creative. ${baseContext} Minimalist design, strong typography space, premium feel, social media optimized.`,
+      `Dynamic promotional image. ${baseContext} Action-oriented, energetic, colorful, modern graphic design style.`,
+      `Elegant brand advertisement. ${baseContext} Sophisticated, clean background, product-focused, Instagram-ready.`,
     ];
 
     const imageResults = [];
 
     for (let i = 0; i < imagePrompts.length; i++) {
       try {
+        // Build message content: if reference images exist, use multimodal input
+        let messageContent: any;
+        if (hasReferences) {
+          messageContent = [
+            { type: "text", text: `Using the provided reference images (logos, branding, products) as inspiration, create: ${imagePrompts[i]} Incorporate the brand colors, style and elements from the references.` },
+          ];
+          for (const refUrl of reference_images) {
+            messageContent.push({
+              type: "image_url",
+              image_url: { url: refUrl },
+            });
+          }
+        } else {
+          messageContent = imagePrompts[i];
+        }
+
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -46,7 +66,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: "google/gemini-3.1-flash-image-preview",
-            messages: [{ role: "user", content: imagePrompts[i] }],
+            messages: [{ role: "user", content: messageContent }],
             modalities: ["image", "text"],
           }),
         });
@@ -54,7 +74,6 @@ serve(async (req) => {
         if (!aiResponse.ok) {
           console.error(`Image ${i} generation failed:`, aiResponse.status);
           if (aiResponse.status === 429) {
-            // Wait and retry once
             await new Promise(r => setTimeout(r, 5000));
             continue;
           }
@@ -69,7 +88,6 @@ serve(async (req) => {
           continue;
         }
 
-        // Extract base64 data and upload to storage
         const base64Match = imageUrl.match(/^data:image\/(\w+);base64,(.+)$/);
         if (!base64Match) {
           console.error(`Image ${i}: unexpected image format`);
@@ -92,12 +110,11 @@ serve(async (req) => {
 
         const { data: publicUrl } = supabase.storage.from("ad-images").getPublicUrl(filePath);
 
-        // Save to ad_images table
         const { error: insertError } = await supabase.from("ad_images").insert({
           ad_id,
           image_url: publicUrl.publicUrl,
           prompt: imagePrompts[i],
-          selected: i === 0, // First image selected by default
+          selected: i === 0,
         });
 
         if (insertError) {
@@ -108,7 +125,6 @@ serve(async (req) => {
         imageResults.push({ index: i, url: publicUrl.publicUrl });
         console.log(`Image ${i} generated and saved successfully`);
 
-        // Small delay between generations to avoid rate limits
         if (i < imagePrompts.length - 1) {
           await new Promise(r => setTimeout(r, 2000));
         }
@@ -123,8 +139,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("generate-ad-images error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
