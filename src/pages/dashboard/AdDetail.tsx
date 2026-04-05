@@ -8,15 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, ImageIcon, Target, Sparkles, CheckCircle, Eye, MousePointerClick, DollarSign, Upload, X, Image as ImageLucide } from "lucide-react";
+import { Loader2, Send, ImageIcon, Target, Sparkles, CheckCircle, Eye, MousePointerClick, DollarSign, Upload, X, Image as ImageLucide, ZoomIn, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 const AdDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [ad, setAd] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
@@ -27,6 +27,8 @@ const AdDetail = () => {
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
   const [imageStyle, setImageStyle] = useState("");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const [targeting, setTargeting] = useState<any>({
     age_min: 18, age_max: 65, gender: "all",
     interests: [], locations: [], languages: ["Spanish"],
@@ -58,7 +60,6 @@ const AdDetail = () => {
     }
     const newFiles = [...referenceFiles, ...files].slice(0, 5);
     setReferenceFiles(newFiles);
-    // Generate previews
     const previews = newFiles.map(f => URL.createObjectURL(f));
     referencePreviews.forEach(p => URL.revokeObjectURL(p));
     setReferencePreviews(previews);
@@ -74,30 +75,18 @@ const AdDetail = () => {
     const files = Array.from(e.target.files || []);
     if (!files.length || !ad) return;
     setUploadingCustom(true);
-
     for (const file of files) {
       try {
         const ext = file.name.split(".").pop() || "jpg";
         const filePath = `${ad.id}/custom_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("ad-images")
-          .upload(filePath, file, { contentType: file.type, upsert: true });
-
+        const { error: uploadError } = await supabase.storage.from("ad-images").upload(filePath, file, { contentType: file.type, upsert: true });
         if (uploadError) throw uploadError;
-
         const { data: publicUrl } = supabase.storage.from("ad-images").getPublicUrl(filePath);
-
-        await supabase.from("ad_images").insert({
-          ad_id: ad.id,
-          image_url: publicUrl.publicUrl,
-          prompt: "Imagen subida por el usuario",
-          selected: false,
-        });
+        await supabase.from("ad_images").insert({ ad_id: ad.id, image_url: publicUrl.publicUrl, prompt: "Imagen subida por el usuario", selected: false });
       } catch (err: any) {
         toast({ title: "Error al subir imagen", description: err.message, variant: "destructive" });
       }
     }
-
     const { data: imgData } = await supabase.from("ad_images").select("*").eq("ad_id", ad.id).order("created_at");
     setImages(imgData || []);
     setUploadingCustom(false);
@@ -109,21 +98,16 @@ const AdDetail = () => {
     setLoadingImages(true);
     try {
       const business = ad.businesses;
-
-      // Upload reference images to storage and get URLs
       const referenceUrls: string[] = [];
       for (const file of referenceFiles) {
         const ext = file.name.split(".").pop() || "jpg";
         const refPath = `${ad.id}/ref_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("ad-images")
-          .upload(refPath, file, { contentType: file.type, upsert: true });
+        const { error: upErr } = await supabase.storage.from("ad-images").upload(refPath, file, { contentType: file.type, upsert: true });
         if (!upErr) {
           const { data: pubUrl } = supabase.storage.from("ad-images").getPublicUrl(refPath);
           referenceUrls.push(pubUrl.publicUrl);
         }
       }
-
       const { data, error } = await supabase.functions.invoke("generate-ad-images", {
         body: {
           ad_id: ad.id,
@@ -151,12 +135,9 @@ const AdDetail = () => {
       const business = ad.businesses;
       const { data, error } = await supabase.functions.invoke("generate-targeting", {
         body: {
-          ad_id: ad.id,
-          business_type: business?.type || "negocio",
-          description: business?.description || "",
-          target_audience: business?.target_audience || "",
-          location: business?.location || "Costa Rica",
-          objective: ad.ad_title || "",
+          ad_id: ad.id, business_type: business?.type || "negocio",
+          description: business?.description || "", target_audience: business?.target_audience || "",
+          location: business?.location || "Costa Rica", objective: ad.ad_title || "",
         },
       });
       if (error) throw error;
@@ -174,6 +155,11 @@ const AdDetail = () => {
     setImages(prev => prev.map(img => ({ ...img, selected: img.id === imageId })));
   };
 
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
   const publishAd = async () => {
     if (!ad) return;
     const selectedImage = images.find(img => img.selected);
@@ -184,16 +170,12 @@ const AdDetail = () => {
     await supabase.from("ads").update({ targeting }).eq("id", ad.id);
     setPublishing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("publish-meta-ad", {
-        body: { ad_id: ad.id },
-      });
+      const { data, error } = await supabase.functions.invoke("publish-meta-ad", { body: { ad_id: ad.id } });
       if (error) throw error;
       if (data.error) {
         if (data.code === "META_NOT_CONFIGURED") {
           toast({ title: "Meta Ads no configurado", description: "Agrega tu Access Token y Ad Account ID en Configuración > Negocio.", variant: "destructive" });
-        } else {
-          throw new Error(data.error);
-        }
+        } else { throw new Error(data.error); }
         setPublishing(false);
         return;
       }
@@ -208,7 +190,6 @@ const AdDetail = () => {
   if (loading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
-
   if (!ad) {
     return <div className="text-center py-12 text-muted-foreground">Anuncio no encontrado.</div>;
   }
@@ -263,17 +244,13 @@ const AdDetail = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Sube logos, fotos de productos, branding o imágenes de referencia. La IA las usará como inspiración para generar las imágenes del anuncio.
+            Sube logos, fotos de productos, branding o imágenes de referencia. La IA las usará como inspiración.
           </p>
-
           <div className="flex flex-wrap gap-3">
             {referencePreviews.map((preview, i) => (
               <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
                 <img src={preview} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removeReference(i)}
-                  className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
+                <button onClick={() => removeReference(i)} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <X className="h-3 w-3" />
                 </button>
               </div>
@@ -286,15 +263,9 @@ const AdDetail = () => {
               </label>
             )}
           </div>
-
           <div className="space-y-2">
             <Label>Instrucciones de estilo (opcional)</Label>
-            <Textarea
-              value={imageStyle}
-              onChange={(e) => setImageStyle(e.target.value)}
-              placeholder="Ej: Usa los colores de mi marca (verde y blanco), incluye el logo, estilo minimalista, fondo tropical..."
-              rows={2}
-            />
+            <Textarea value={imageStyle} onChange={(e) => setImageStyle(e.target.value)} placeholder="Ej: Usa los colores de mi marca (verde y blanco), incluye el logo, estilo minimalista..." rows={2} />
           </div>
         </CardContent>
       </Card>
@@ -327,18 +298,34 @@ const AdDetail = () => {
               <p>No hay imágenes aún. Genera con IA o sube las tuyas.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {images.map((img) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {images.map((img, idx) => (
                 <div
                   key={img.id}
-                  onClick={() => selectImage(img.id)}
-                  className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`relative group rounded-xl overflow-hidden border-2 transition-all ${
                     img.selected ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-muted-foreground/30"
                   }`}
                 >
                   <img src={img.image_url} alt="Ad image" className="w-full aspect-square object-cover" />
+                  {/* Overlay with actions */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => openLightbox(idx)}
+                      className="bg-background/90 text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                      title="Ver en grande"
+                    >
+                      <ZoomIn className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => selectImage(img.id)}
+                      className="bg-primary/90 text-primary-foreground rounded-full p-2 hover:bg-primary transition-colors"
+                      title="Seleccionar"
+                    >
+                      <CheckCircle className="h-5 w-5" />
+                    </button>
+                  </div>
                   {img.selected && (
-                    <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
                       <CheckCircle className="h-4 w-4" />
                     </div>
                   )}
@@ -348,6 +335,58 @@ const AdDetail = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Lightbox Dialog */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-4xl w-full p-0 bg-black/95 border-none">
+          {images.length > 0 && (
+            <div className="relative flex flex-col items-center">
+              <img
+                src={images[lightboxIndex]?.image_url}
+                alt="Vista ampliada"
+                className="max-h-[80vh] w-auto object-contain rounded-lg"
+              />
+              {/* Navigation */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setLightboxIndex((prev) => (prev - 1 + images.length) % images.length)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={() => setLightboxIndex((prev) => (prev + 1) % images.length)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+              {/* Actions bar */}
+              <div className="flex items-center gap-3 mt-4 mb-4">
+                <span className="text-white/60 text-sm">{lightboxIndex + 1} / {images.length}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-background/20 border-white/20 text-white hover:bg-background/40"
+                  onClick={() => { selectImage(images[lightboxIndex].id); setLightboxOpen(false); }}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" /> Seleccionar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-background/20 border-white/20 text-white hover:bg-background/40"
+                  onClick={() => { setLightboxOpen(false); generateImages(); }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" /> Regenerar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Targeting Section */}
       <Card>
