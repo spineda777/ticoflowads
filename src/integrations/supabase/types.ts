@@ -186,6 +186,87 @@ export type Database = {
           },
         ]
       }
+      campaign_drafts: {
+        Row: {
+          ad_body: string | null
+          ad_title: string | null
+          budget_daily: number | null
+          budget_label: string | null
+          budget_monthly: number
+          business_id: string | null
+          campaign_name: string | null
+          created_at: string
+          id: string
+          keywords: string[] | null
+          primary_goal: string
+          selected_variant: number | null
+          status: string
+          targeting_radius: string
+          tenant_id: string
+          test_mode: boolean
+          updated_at: string
+          user_id: string
+          variants: Json | null
+        }
+        Insert: {
+          ad_body?: string | null
+          ad_title?: string | null
+          budget_daily?: number | null
+          budget_label?: string | null
+          budget_monthly?: number
+          business_id?: string | null
+          campaign_name?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          primary_goal?: string
+          selected_variant?: number | null
+          status?: string
+          targeting_radius?: string
+          tenant_id: string
+          test_mode?: boolean
+          updated_at?: string
+          user_id: string
+          variants?: Json | null
+        }
+        Update: {
+          ad_body?: string | null
+          ad_title?: string | null
+          budget_daily?: number | null
+          budget_label?: string | null
+          budget_monthly?: number
+          business_id?: string | null
+          campaign_name?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          primary_goal?: string
+          selected_variant?: number | null
+          status?: string
+          targeting_radius?: string
+          tenant_id?: string
+          test_mode?: boolean
+          updated_at?: string
+          user_id?: string
+          variants?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_drafts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_drafts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
