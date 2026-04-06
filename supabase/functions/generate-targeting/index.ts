@@ -14,13 +14,12 @@ serve(async (req) => {
 
     if (!ad_id) {
       return new Response(JSON.stringify({ error: "ad_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     const prompt = `Eres un experto en Meta Ads y segmentación de audiencias para negocios en Latinoamérica.
 
@@ -46,39 +45,31 @@ Responde SOLO con JSON válido con esta estructura exacta:
 
 Sé específico y realista con los intereses de Meta Ads.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "Eres un experto en Meta Ads. Responde SOLO con JSON válido." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      }
+    );
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI error:", aiResponse.status, errText);
-      if (aiResponse.status === 429) {
+    if (!geminiResponse.ok) {
+      const errText = await geminiResponse.text();
+      console.error("Gemini error:", geminiResponse.status, errText);
+      if (geminiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit. Intenta más tarde." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos agotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error("AI gateway error");
+      throw new Error("Gemini API error");
     }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const geminiData = await geminiResponse.json();
+    const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     let targeting;
     try {
@@ -86,19 +77,14 @@ Sé específico y realista con los intereses de Meta Ads.`;
       targeting = JSON.parse(jsonMatch ? jsonMatch[0] : content);
     } catch {
       targeting = {
-        age_min: 18,
-        age_max: 65,
-        gender: "all",
-        interests: ["general"],
-        locations: [location || "Costa Rica"],
-        languages: ["Spanish"],
-        daily_budget_suggestion: 10,
+        age_min: 18, age_max: 65, gender: "all",
+        interests: ["general"], locations: [location || "Costa Rica"],
+        languages: ["Spanish"], daily_budget_suggestion: 10,
         estimated_reach: "Estimación no disponible",
         recommendation: "Segmentación general recomendada",
       };
     }
 
-    // Save targeting to ad
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -111,8 +97,7 @@ Sé específico y realista con los intereses de Meta Ads.`;
   } catch (e) {
     console.error("generate-targeting error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

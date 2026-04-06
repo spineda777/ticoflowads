@@ -18,16 +18,14 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const hasReferences = reference_images && reference_images.length > 0;
     const styleNote = style_instructions ? ` Style: ${style_instructions}.` : "";
-
     const baseContext = `Business type: ${business_type || "business"}. ${description || ""}. Target: ${target_audience || "general audience"}.${styleNote}`;
 
     const imagePrompts = [
@@ -39,69 +37,71 @@ serve(async (req) => {
     ];
 
     const imageResults = [];
+    const hasReferences = reference_images && reference_images.length > 0;
 
     for (let i = 0; i < imagePrompts.length; i++) {
       try {
-        // Build message content: if reference images exist, use multimodal input
-        let messageContent: any;
+        // Build parts for Gemini
+        const parts: any[] = [];
+
         if (hasReferences) {
-          messageContent = [
-            { type: "text", text: `Using the provided reference images (logos, branding, products) as inspiration, create: ${imagePrompts[i]} Incorporate the brand colors, style and elements from the references.` },
-          ];
+          parts.push({ text: `Using the provided reference images as inspiration, create: ${imagePrompts[i]} Incorporate the brand colors, style and elements from the references.` });
           for (const refUrl of reference_images) {
-            messageContent.push({
-              type: "image_url",
-              image_url: { url: refUrl },
-            });
+            try {
+              const imgResp = await fetch(refUrl);
+              if (imgResp.ok) {
+                const imgBuffer = await imgResp.arrayBuffer();
+                const base64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+                const mimeType = imgResp.headers.get("content-type") || "image/png";
+                parts.push({ inlineData: { mimeType, data: base64 } });
+              }
+            } catch (e) {
+              console.error(`Failed to fetch reference image: ${refUrl}`, e);
+            }
           }
         } else {
-          messageContent = imagePrompts[i];
+          parts.push({ text: imagePrompts[i] });
         }
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3.1-flash-image-preview",
-            messages: [{ role: "user", content: messageContent }],
-            modalities: ["image", "text"],
-          }),
-        });
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: {
+                responseModalities: ["TEXT", "IMAGE"],
+              },
+            }),
+          }
+        );
 
-        if (!aiResponse.ok) {
-          console.error(`Image ${i} generation failed:`, aiResponse.status);
-          if (aiResponse.status === 429) {
+        if (!geminiResponse.ok) {
+          console.error(`Image ${i} generation failed:`, geminiResponse.status);
+          if (geminiResponse.status === 429) {
             await new Promise(r => setTimeout(r, 5000));
-            continue;
           }
           continue;
         }
 
-        const aiData = await aiResponse.json();
-        const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        const geminiData = await geminiResponse.json();
+        const candidateParts = geminiData.candidates?.[0]?.content?.parts || [];
+        const imagePart = candidateParts.find((p: any) => p.inlineData);
 
-        if (!imageUrl) {
+        if (!imagePart?.inlineData) {
           console.error(`Image ${i}: no image in response`);
           continue;
         }
 
-        const base64Match = imageUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-        if (!base64Match) {
-          console.error(`Image ${i}: unexpected image format`);
-          continue;
-        }
-
-        const ext = base64Match[1] === "jpeg" ? "jpg" : base64Match[1];
-        const base64Data = base64Match[2];
+        const { mimeType, data: base64Data } = imagePart.inlineData;
+        const ext = mimeType === "image/jpeg" ? "jpg" : "png";
         const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
         const filePath = `${ad_id}/image_${i}_${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("ad-images")
-          .upload(filePath, binaryData, { contentType: `image/${base64Match[1]}`, upsert: true });
+          .upload(filePath, binaryData, { contentType: mimeType, upsert: true });
 
         if (uploadError) {
           console.error(`Image ${i} upload error:`, uploadError);
@@ -126,7 +126,7 @@ serve(async (req) => {
         console.log(`Image ${i} generated and saved successfully`);
 
         if (i < imagePrompts.length - 1) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 3000));
         }
       } catch (imgErr) {
         console.error(`Image ${i} error:`, imgErr);

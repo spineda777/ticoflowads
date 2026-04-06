@@ -18,11 +18,16 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
-    const systemPrompt = `Eres un experto en Google Ads para negocios en Latinoamérica. 
-Genera contenido publicitario optimizado. Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
+    const prompt = `Eres un experto en Google Ads para negocios en Latinoamérica.
+Negocio: ${businessName}
+Descripción: ${description}
+${budget ? `Presupuesto diario: $${budget}` : ""}
+
+Genera contenido publicitario optimizado para Google Ads.
+Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
 {
   "titles": ["título1", "título2", "título3", "título4", "título5"],
   "descriptions": ["desc1", "desc2", "desc3", "desc4"],
@@ -33,95 +38,50 @@ Genera contenido publicitario optimizado. Responde ÚNICAMENTE con un JSON váli
     "description": "Descripción principal que aparece en Google"
   }
 }
-Restricciones:
-- 5 títulos de máximo 30 caracteres cada uno
-- 4 descripciones de máximo 90 caracteres cada una
-- 10 palabras clave relevantes
-- Títulos persuasivos con llamado a la acción
-- Palabras clave con intención de compra`;
+Restricciones: 5 títulos (máx 30 chars), 4 descripciones (máx 90 chars), 10 palabras clave relevantes.`;
 
-    const userPrompt = `Negocio: ${businessName}
-Descripción: ${description}
-${budget ? `Presupuesto diario: $${budget}` : ""}
-Genera el contenido publicitario optimizado para Google Ads.`;
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      }
+    );
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_google_ads",
-            description: "Generate Google Ads content",
-            parameters: {
-              type: "object",
-              properties: {
-                titles: { type: "array", items: { type: "string" }, description: "5 ad titles, max 30 chars each" },
-                descriptions: { type: "array", items: { type: "string" }, description: "4 descriptions, max 90 chars each" },
-                keywords: { type: "array", items: { type: "string" }, description: "10 relevant keywords" },
-                ad_preview: {
-                  type: "object",
-                  properties: {
-                    headline: { type: "string" },
-                    display_url: { type: "string" },
-                    description: { type: "string" },
-                  },
-                  required: ["headline", "display_url", "description"],
-                },
-              },
-              required: ["titles", "descriptions", "keywords", "ad_preview"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "generate_google_ads" } },
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Límite de solicitudes excedido. Intenta de nuevo en un momento." }), {
+    if (!geminiResponse.ok) {
+      const errText = await geminiResponse.text();
+      console.error("Gemini error:", geminiResponse.status, errText);
+      if (geminiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Límite de solicitudes excedido." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA agotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error("AI gateway error");
+      throw new Error("Gemini API error");
     }
 
-    const aiData = await response.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    let googleAdsContent;
+    const geminiData = await geminiResponse.json();
+    const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    if (toolCall?.function?.arguments) {
-      googleAdsContent = JSON.parse(toolCall.function.arguments);
-    } else {
+    let googleAdsContent;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      googleAdsContent = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    } catch {
       throw new Error("No se pudo generar el contenido");
     }
 
-    // If adId provided, update the ad
     if (adId) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const sb = createClient(supabaseUrl, serviceKey);
 
       await sb.from("ads").update({
-        ad_title: googleAdsContent.titles[0],
-        ad_body: googleAdsContent.descriptions[0],
+        ad_title: googleAdsContent.titles?.[0],
+        ad_body: googleAdsContent.descriptions?.[0],
         call_to_action: "LEARN_MORE",
         suggested_targeting: JSON.stringify(googleAdsContent.keywords),
         status: "ready",
