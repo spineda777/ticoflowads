@@ -14,15 +14,14 @@ serve(async (req) => {
 
     if (!adId || !objective) {
       return new Response(JSON.stringify({ error: "adId and objective are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-    const prompt = `Eres un experto en marketing digital y Meta Ads (Facebook e Instagram) para negocios en Latinoamérica.
+    const prompt = `Eres un experto en marketing digital y Meta Ads para negocios en Latinoamérica.
 
 Genera un anuncio publicitario para:
 - Negocio: ${businessName}
@@ -35,49 +34,39 @@ ${extraContext ? `- Contexto adicional: ${extraContext}` : ""}
 Responde SOLO en formato JSON con esta estructura exacta:
 {
   "ad_title": "Título del anuncio (máximo 40 caracteres)",
-  "ad_body": "Texto principal del anuncio (máximo 125 caracteres para mejor rendimiento)",
-  "call_to_action": "Texto del botón CTA (ej: Comprar ahora, Más información, Enviar mensaje)",
+  "ad_body": "Texto principal del anuncio (máximo 125 caracteres)",
+  "call_to_action": "Texto del botón CTA",
   "suggested_targeting": "Descripción breve de la segmentación recomendada"
 }
 
 El anuncio debe ser en español, atractivo, con urgencia y relevante para el mercado latinoamericano.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "Eres un experto en Meta Ads. Responde SOLO con JSON válido." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      }
+    );
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI error:", aiResponse.status, errText);
-
-      if (aiResponse.status === 429) {
+    if (!geminiResponse.ok) {
+      const errText = await geminiResponse.text();
+      console.error("Gemini error:", geminiResponse.status, errText);
+      if (geminiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Límite de solicitudes alcanzado. Intenta más tarde." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos agotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error("AI gateway error");
+      throw new Error("Gemini API error");
     }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const geminiData = await geminiResponse.json();
+    const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Parse JSON from response
     let adContent;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -91,7 +80,6 @@ El anuncio debe ser en español, atractivo, con urgencia y relevante para el mer
       };
     }
 
-    // Update ad in database
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -112,8 +100,7 @@ El anuncio debe ser en español, atractivo, con urgencia y relevante para el mer
   } catch (e) {
     console.error("generate-ad error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
