@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard, PlusCircle, Megaphone, Settings, Users,
-  CreditCard, Bell, LogOut, Menu, X, ChevronRight
+  CreditCard, Bell, LogOut, Menu, X, ChevronRight, Target
 } from "lucide-react";
 import ticoflowLogo from "@/assets/ticoflow-logo.png";
 
