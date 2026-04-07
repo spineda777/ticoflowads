@@ -108,32 +108,18 @@ const NewCampaign = () => {
     const business = businesses.find((b) => b.id === businessId);
 
     try {
-      // Direct fetch to Supabase bypassing Lovable proxy
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-ads-v2`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "apikey": supabaseKey,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("generate-ads-v2", {
+        body: {
           businessName: business?.name || "Mi negocio",
           description: business?.description || "",
           budget,
           goal: primaryGoal,
           radius,
           generateVariants: true,
-        }),
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Error al generar");
+      if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       setVariants(data.data?.variants || []);
