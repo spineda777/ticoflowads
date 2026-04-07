@@ -37,7 +37,7 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/dashboard`,
     });
     if (result.error) {
       toast({ title: "Error con Google", description: String(result.error), variant: "destructive" });
