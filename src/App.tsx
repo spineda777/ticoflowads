@@ -18,6 +18,8 @@ import DashboardHome from "./pages/dashboard/DashboardHome.tsx";
 import NewAd from "./pages/dashboard/NewAd.tsx";
 import AdsList from "./pages/dashboard/AdsList.tsx";
 import AdDetail from "./pages/dashboard/AdDetail.tsx";
+import NewCampaign from "./pages/dashboard/NewCampaign.tsx";
+import CampaignsList from "./pages/dashboard/CampaignsList.tsx";
 import SettingsPage from "./pages/dashboard/SettingsPage.tsx";
 import TeamPage from "./pages/dashboard/TeamPage.tsx";
 import BillingPage from "./pages/dashboard/BillingPage.tsx";
