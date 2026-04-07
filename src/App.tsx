@@ -52,8 +52,10 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<DashboardHome />} />
               <Route path="new-ad" element={<NewAd />} />
+              <Route path="new-campaign" element={<NewCampaign />} />
               <Route path="ads" element={<AdsList />} />
               <Route path="ads/:id" element={<AdDetail />} />
+              <Route path="campaigns" element={<CampaignsList />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="billing" element={<BillingPage />} />
