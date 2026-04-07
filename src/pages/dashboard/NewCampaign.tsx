@@ -114,7 +114,7 @@ const NewCampaign = () => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-google-ads`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-ads-v2`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
