@@ -170,16 +170,12 @@ const AdDetail = () => {
     await supabase.from("ads").update({ targeting }).eq("id", ad.id);
     setPublishing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("publish-meta-ad", { body: { ad_id: ad.id } });
-      if (error) throw error;
-      if (data.error) {
-        if (data.code === "META_NOT_CONFIGURED") {
-          toast({ title: "Meta Ads no configurado", description: "Agrega tu Access Token y Ad Account ID en Configuración > Negocio.", variant: "destructive" });
-        } else { throw new Error(data.error); }
-        setPublishing(false);
-        return;
-      }
-      toast({ title: "¡Anuncio publicado en Meta Ads!", description: "La campaña se creó en modo pausado." });
+      // Test mode - save as draft
+      await supabase.from("ads").update({
+        status: "published",
+        published_at: new Date().toISOString(),
+      }).eq("id", ad.id);
+      toast({ title: "¡Anuncio guardado!", description: "Tu anuncio está listo. Conecta Google Ads para publicar en vivo." });
       setAd((prev: any) => ({ ...prev, status: "published" }));
     } catch (err: any) {
       toast({ title: "Error al publicar", description: err.message, variant: "destructive" });
