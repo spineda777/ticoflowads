@@ -60,7 +60,7 @@ Restricciones: 5 títulos (máx 30 chars), 4 descripciones (máx 90 chars), 10 k
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
         messages: [{ role: "user", content: prompt }],
       }),
