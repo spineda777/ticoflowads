@@ -40,8 +40,8 @@ const DashboardHome = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Panel de control</h1>
-        <Link to="/dashboard/new-ad">
-          <Button><PlusCircle className="h-4 w-4 mr-2" />Crear anuncio</Button>
+        <Link to="/dashboard/new-campaign">
+          <Button><PlusCircle className="h-4 w-4 mr-2" />Nueva campaña</Button>
         </Link>
       </div>
 

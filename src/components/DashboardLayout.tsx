@@ -3,14 +3,15 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard, PlusCircle, Megaphone, Settings, Users,
-  CreditCard, Bell, LogOut, Menu, X, ChevronRight
+  CreditCard, Bell, LogOut, Menu, X, ChevronRight, Target
 } from "lucide-react";
 import ticoflowLogo from "@/assets/ticoflow-logo.png";
 
 const sidebarLinks = [
   { label: "Panel", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Crear anuncio", href: "/dashboard/new-ad", icon: PlusCircle },
-  { label: "Mis anuncios", href: "/dashboard/ads", icon: Megaphone },
+  { label: "Nueva campaña", href: "/dashboard/new-campaign", icon: PlusCircle },
+  { label: "Mis campañas", href: "/dashboard/campaigns", icon: Target },
+  { label: "Anuncios", href: "/dashboard/ads", icon: Megaphone },
   { label: "Equipo", href: "/dashboard/team", icon: Users },
   { label: "Facturación", href: "/dashboard/billing", icon: CreditCard },
   { label: "Configuración", href: "/dashboard/settings", icon: Settings },

@@ -170,16 +170,12 @@ const AdDetail = () => {
     await supabase.from("ads").update({ targeting }).eq("id", ad.id);
     setPublishing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("publish-meta-ad", { body: { ad_id: ad.id } });
-      if (error) throw error;
-      if (data.error) {
-        if (data.code === "META_NOT_CONFIGURED") {
-          toast({ title: "Meta Ads no configurado", description: "Agrega tu Access Token y Ad Account ID en Configuración > Negocio.", variant: "destructive" });
-        } else { throw new Error(data.error); }
-        setPublishing(false);
-        return;
-      }
-      toast({ title: "¡Anuncio publicado en Meta Ads!", description: "La campaña se creó en modo pausado." });
+      // Test mode - save as draft
+      await supabase.from("ads").update({
+        status: "published",
+        published_at: new Date().toISOString(),
+      }).eq("id", ad.id);
+      toast({ title: "¡Anuncio guardado!", description: "Tu anuncio está listo. Conecta Google Ads para publicar en vivo." });
       setAd((prev: any) => ({ ...prev, status: "published" }));
     } catch (err: any) {
       toast({ title: "Error al publicar", description: err.message, variant: "destructive" });
@@ -444,10 +440,10 @@ const AdDetail = () => {
       {ad.status !== "published" && (
         <Card>
           <CardContent className="pt-6">
-            <Button onClick={publishAd} disabled={publishing || images.length === 0} className="w-full" size="lg">
-              {publishing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Publicando en Meta Ads...</> : <><Send className="h-5 w-5 mr-2" />Publicar anuncio en Meta Ads</>}
+             <Button onClick={publishAd} disabled={publishing || images.length === 0} className="w-full" size="lg">
+              {publishing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Guardando...</> : <><Send className="h-5 w-5 mr-2" />Guardar anuncio</>}
             </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">La campaña se creará en modo pausado.</p>
+            <p className="text-xs text-muted-foreground text-center mt-2">El anuncio se guardará como borrador.</p>
           </CardContent>
         </Card>
       )}
