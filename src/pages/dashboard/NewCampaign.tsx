@@ -68,6 +68,12 @@ const NewCampaign = () => {
   const [radius, setRadius] = useState("15mi");
   const [businessId, setBusinessId] = useState("");
 
+  // Buzón - datos extra para personalizar anuncios
+  const [extraPhone, setExtraPhone] = useState("");
+  const [extraAddress, setExtraAddress] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
+  const [showBuzon, setShowBuzon] = useState(false);
+
   // AI variants
   const [variants, setVariants] = useState<CampaignVariant[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null);
