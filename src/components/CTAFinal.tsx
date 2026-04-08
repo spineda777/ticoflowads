@@ -1,5 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const CTAFinal = () => {
   const ref = useRef(null);
@@ -28,6 +29,7 @@ const CTAFinal = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.3 }}
+          className="space-y-4"
         >
           <a
             href="/signup"
@@ -35,6 +37,9 @@ const CTAFinal = () => {
           >
             Crear mi primer anuncio gratis →
           </a>
+          <div className="flex justify-center">
+            <GoogleSignInButton />
+          </div>
           <p className="text-primary-foreground/60 text-xs mt-4">
             Sin tarjeta de crédito · Cancela cuando quieras
           </p>
