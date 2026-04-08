@@ -47,7 +47,11 @@ const HeroSection = () => (
             </a>
           </motion.div>
 
-          <motion.p {...fadeUp(0.4)} className="text-xs text-muted-foreground">
+          <motion.div {...fadeUp(0.35)}>
+            <GoogleSignInButton />
+          </motion.div>
+
+          <motion.p {...fadeUp(0.4)} className="text-xs text-muted-foreground mt-4">
             Sin tarjeta de crédito · Primer anuncio en minutos · Cancela cuando quieras
           </motion.p>
         </div>

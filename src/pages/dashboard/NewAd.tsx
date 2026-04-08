@@ -1,17 +1,5 @@
-// Other imports
+import { Navigate } from "react-router-dom";
 
-// ...
+const NewAd = () => <Navigate to="/dashboard/new-campaign" replace />;
 
-// Actual implementation
-
-invoke("generate-google-ads", {
-    businessName,
-    description,
-    budget,
-    goal,
-    radius,
-    adId,
-    generateVariants,
-});
-
-// Other code
+export default NewAd;
