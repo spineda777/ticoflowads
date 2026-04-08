@@ -108,9 +108,39 @@ const BillingPage = () => {
     load();
   }, [user]);
 
-  const handleUpgrade = (planId: string) => {
-    // Stripe checkout will be integrated here
-    console.log("Upgrade to:", planId);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleUpgrade = async (planId: string) => {
+    if (!user || planId === "free") return;
+    setCheckoutLoading(planId);
+
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .single();
+
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          planId,
+          tenantId: profile?.tenant_id,
+          userEmail: user.email,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No se recibió URL de pago");
+      }
+    } catch (err: any) {
+      alert("Error al iniciar el pago: " + err.message);
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   return (
@@ -193,10 +223,10 @@ const BillingPage = () => {
                 <Button
                   variant={plan.highlight ? "default" : plan.id === currentPlan ? "outline" : "secondary"}
                   className={`w-full ${plan.highlight ? "h-11 text-base" : ""}`}
-                  disabled={plan.id === currentPlan}
+                  disabled={plan.id === currentPlan || checkoutLoading === plan.id}
                   onClick={() => handleUpgrade(plan.id)}
                 >
-                  {plan.id === currentPlan ? "Plan actual" : plan.id === "free" ? "Comenzar gratis" : "Actualizar ahora"}
+                  {checkoutLoading === plan.id ? "Redirigiendo..." : plan.id === currentPlan ? "Plan actual" : plan.id === "free" ? "Comenzar gratis" : "Actualizar ahora"}
                 </Button>
               </CardContent>
             </Card>
