@@ -114,6 +114,12 @@ const NewCampaign = () => {
     const business = businesses.find((b) => b.id === businessId);
 
     try {
+      const extras = {
+        phone: extraPhone || undefined,
+        address: extraAddress || undefined,
+        extraNotes: extraNotes || undefined,
+      };
+
       const { data, error } = await supabase.functions.invoke("generate-ads-v2", {
         body: {
           businessName: business?.name || "Mi negocio",
@@ -122,6 +128,7 @@ const NewCampaign = () => {
           goal: primaryGoal,
           radius,
           generateVariants: true,
+          extras: (extraPhone || extraAddress || extraNotes) ? extras : undefined,
         },
       });
 
