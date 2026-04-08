@@ -19,13 +19,15 @@ serve(async (req) => {
     const plan = PLANS[planId];
 
     if (!plan) {
-      return new Response(JSON.stringify({ error: "Plan no válido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Plan no válido" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
-    const baseUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+    const baseUrl = Deno.env.get("SITE_URL") || "https://ticoflowads.lovable.app";
 
     const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -45,11 +47,20 @@ serve(async (req) => {
       }).toString(),
     });
 
-    if (!response.ok) throw new Error(`Stripe error: ${await response.text()}`);
+    const stripeData = await response.json();
 
-    const session = await response.json();
-    return new Response(JSON.stringify({ sessionId: session.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!response.ok) {
+      throw new Error(stripeData.error?.message || "Error de Stripe");
+    }
+
+    // Devolver la URL directa para redirigir sin necesitar Stripe.js
+    return new Response(JSON.stringify({ url: stripeData.url, sessionId: stripeData.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
