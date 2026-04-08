@@ -1,8 +1,3 @@
-import Stripe from 'stripe';
+import { loadStripe } from "@stripe/js";
 
-// Initialize Stripe with your secret key
-const stripe = new Stripe('your-secret-key', {
-  apiVersion: '2020-08-27',
-});
-
-export default stripe;
+export const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
