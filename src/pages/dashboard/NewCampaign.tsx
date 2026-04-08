@@ -68,6 +68,12 @@ const NewCampaign = () => {
   const [radius, setRadius] = useState("15mi");
   const [businessId, setBusinessId] = useState("");
 
+  // Buzón - datos extra para personalizar anuncios
+  const [extraPhone, setExtraPhone] = useState("");
+  const [extraAddress, setExtraAddress] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
+  const [showBuzon, setShowBuzon] = useState(false);
+
   // AI variants
   const [variants, setVariants] = useState<CampaignVariant[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null);
@@ -108,6 +114,12 @@ const NewCampaign = () => {
     const business = businesses.find((b) => b.id === businessId);
 
     try {
+      const extras = {
+        phone: extraPhone || undefined,
+        address: extraAddress || undefined,
+        extraNotes: extraNotes || undefined,
+      };
+
       const { data, error } = await supabase.functions.invoke("generate-ads-v2", {
         body: {
           businessName: business?.name || "Mi negocio",
@@ -116,6 +128,7 @@ const NewCampaign = () => {
           goal: primaryGoal,
           radius,
           generateVariants: true,
+          extras: (extraPhone || extraAddress || extraNotes) ? extras : undefined,
         },
       });
 
@@ -318,6 +331,71 @@ const NewCampaign = () => {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Buzón - Datos extra para personalizar */}
+        <div className="space-y-3">
+          <button
+            onClick={() => setShowBuzon(!showBuzon)}
+            className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            <Sparkles className="h-4 w-4" />
+            {showBuzon ? "Ocultar" : "Agregar"} datos extra para personalizar tus anuncios
+            <ChevronRight className={`h-4 w-4 transition-transform ${showBuzon ? "rotate-90" : ""}`} />
+          </button>
+          <AnimatePresence>
+            {showBuzon && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardContent className="pt-5 space-y-4">
+                    <p className="text-xs text-muted-foreground">
+                      📬 <strong>Buzón de personalización:</strong> Agrega detalles específicos para que la IA cree anuncios más relevantes para tu negocio.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium flex items-center gap-1">
+                          <Phone className="h-3 w-3" /> Teléfono de contacto
+                        </label>
+                        <Input
+                          placeholder="Ej: +506 8888-8888"
+                          value={extraPhone}
+                          onChange={(e) => setExtraPhone(e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium flex items-center gap-1">
+                          <MapPin className="h-3 w-3" /> Dirección física
+                        </label>
+                        <Input
+                          placeholder="Ej: San José, Costa Rica"
+                          value={extraAddress}
+                          onChange={(e) => setExtraAddress(e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium">📝 Notas adicionales para la IA</label>
+                      <textarea
+                        placeholder="Ej: Tenemos 15% de descuento este mes. Horario: Lun-Vie 8am-5pm. Ofrecemos envío gratis..."
+                        value={extraNotes}
+                        onChange={(e) => setExtraNotes(e.target.value)}
+                        rows={3}
+                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                      />
+                      <p className="text-[10px] text-muted-foreground">La IA usará estos datos para crear anuncios más específicos y relevantes.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Generate Button */}

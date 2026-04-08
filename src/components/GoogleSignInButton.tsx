@@ -16,17 +16,20 @@ const GoogleSignInButton = () => {
 
       if (result.error) {
         toast.error("Error al iniciar sesión con Google");
+        setLoading(false);
         return;
       }
 
       if (result.redirected) {
+        // Browser redirects to Google — the auth state will be restored on return
+        // Index.tsx will auto-redirect to /dashboard once session is detected
         return;
       }
 
-      navigate("/dashboard");
+      // Session set successfully — navigate to dashboard
+      navigate("/dashboard", { replace: true });
     } catch {
       toast.error("Error al iniciar sesión con Google");
-    } finally {
       setLoading(false);
     }
   };

@@ -36,15 +36,20 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
-    });
-    if (result.error) {
-      toast({ title: "Error con Google", description: String(result.error), variant: "destructive" });
-      setGoogleLoading(false);
-      return;
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast({ title: "Error con Google", description: String(result.error), variant: "destructive" });
+        setGoogleLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      // Session set — the useEffect watching `user` will redirect to /dashboard
+    } catch {
+      toast({ title: "Error con Google", description: "Intenta de nuevo", variant: "destructive" });
     }
-    if (result.redirected) return;
     setGoogleLoading(false);
   };
 
