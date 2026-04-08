@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { CheckCircle, BarChart3, MousePointerClick, Eye } from "lucide-react";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
