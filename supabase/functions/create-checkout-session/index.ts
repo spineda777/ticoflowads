@@ -16,10 +16,19 @@ serve(async (req) => {
 
   try {
     const { planId, tenantId, userEmail } = await req.json();
+    
+    // 🆕 Logging más detallado
+    console.log("Checkout request:", { planId, tenantId, userEmail, availablePlans: Object.keys(PLANS) });
+    
     const plan = PLANS[planId];
 
     if (!plan) {
-      return new Response(JSON.stringify({ error: "Plan no válido" }), {
+      console.error("Invalid plan:", planId);
+      return new Response(JSON.stringify({ 
+        error: "Plan no válido",
+        receivedPlanId: planId,
+        availablePlans: Object.keys(PLANS)
+      }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -28,6 +37,9 @@ serve(async (req) => {
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const baseUrl = Deno.env.get("SITE_URL") || "https://ticoflowads.lovable.app";
+
+    // 🆕 Log del price ID que se envía a Stripe
+    console.log("Sending to Stripe with price:", plan.priceId);
 
     const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -50,6 +62,7 @@ serve(async (req) => {
     const stripeData = await response.json();
 
     if (!response.ok) {
+      console.error("Stripe error:", stripeData);
       throw new Error(stripeData.error?.message || "Error de Stripe");
     }
 
@@ -58,9 +71,10 @@ serve(async (req) => {
     });
 
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error" }), {
+    const errorMsg = e instanceof Error ? e.message : "Error desconocido";
+    console.error("Checkout error:", errorMsg);
+    return new Response(JSON.stringify({ error: errorMsg }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
-// v5-live real
