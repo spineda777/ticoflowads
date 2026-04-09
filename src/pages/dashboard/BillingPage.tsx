@@ -259,4 +259,3 @@ const BillingPage = () => {
 };
 
 export default BillingPage;
-//v2
