@@ -6,9 +6,9 @@ const corsHeaders = {
 };
 
 const PLANS: Record<string, { priceId: string }> = {
-  starter: { priceId: "price_1QgHZX4fGTWjSEZHLIlKhYpL" },
-  pro: { priceId: "price_1QgHaY4fGTWjSEZH8G3k9nKM" },
-  agency: { priceId: "price_1QgHb04fGTWjSEZHpQr0vL2N" },
+  starter: { priceId: "price_1TJnh40QKOBv1IMxCBOcY4NI" },
+  pro:     { priceId: "price_1TJnhZ0QKOBv1IMxt6rLjvag" },
+  agency:  { priceId: "price_1TJniD0QKOBv1IMxgF7lA7RP" },
 };
 
 serve(async (req) => {
@@ -53,7 +53,6 @@ serve(async (req) => {
       throw new Error(stripeData.error?.message || "Error de Stripe");
     }
 
-    // Devolver la URL directa para redirigir sin necesitar Stripe.js
     return new Response(JSON.stringify({ url: stripeData.url, sessionId: stripeData.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -64,4 +63,3 @@ serve(async (req) => {
     });
   }
 });
- 
