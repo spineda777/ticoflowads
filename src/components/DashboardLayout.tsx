@@ -5,13 +5,13 @@ import {
   LayoutDashboard, PlusCircle, Megaphone, Settings, Users,
   CreditCard, Bell, LogOut, Menu, X, ChevronRight, Target
 } from "lucide-react";
-import ticoflowLogo from "@/assets/ticoflow-logo.png";
 
 const sidebarLinks = [
   { label: "Panel", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Nueva campaña", href: "/dashboard/new-campaign", icon: PlusCircle },
-  { label: "Mis campañas", href: "/dashboard/campaigns", icon: Target },
-  { label: "Anuncios", href: "/dashboard/ads", icon: Megaphone },
+  { label: "Nueva campaña", href: "/dashboard/new-campaign", icon: PlusCircle, badge: "Google Ads" },
+  { label: "Mis campañas", href: "/dashboard/campaigns", icon: Target, badge: "Google" },
+  { label: "Nuevo anuncio", href: "/dashboard/new-ad", icon: PlusCircle, badge: "Meta · TikTok" },
+  { label: "Mis anuncios", href: "/dashboard/ads", icon: Megaphone, badge: "Meta" },
   { label: "Equipo", href: "/dashboard/team", icon: Users },
   { label: "Facturación", href: "/dashboard/billing", icon: CreditCard },
   { label: "Configuración", href: "/dashboard/settings", icon: Settings },
@@ -34,7 +34,7 @@ const DashboardLayout = () => {
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-background border-r border-border transform transition-transform duration-200
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:flex md:flex-col`}>
         <div className="flex items-center gap-2 px-5 h-16 border-b border-border">
-          <img src={ticoflowLogo} alt="TicoFlow" className="h-8 w-8 rounded-full" />
+          <img src="/logo.png" alt="TicoFlow" className="h-8 w-8 rounded-full" />
           <span className="font-heading font-bold text-lg text-primary">TicoFlowAds<span className="text-accent">.ia</span></span>
         </div>
 
@@ -51,7 +51,12 @@ const DashboardLayout = () => {
                 }`}
               >
                 <link.icon className="h-4 w-4" />
-                {link.label}
+                <span className="flex-1">{link.label}</span>
+                {link.badge && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                    {link.badge}
+                  </span>
+                )}
                 {isActive && <ChevronRight className="h-3 w-3 ml-auto" />}
               </Link>
             );
