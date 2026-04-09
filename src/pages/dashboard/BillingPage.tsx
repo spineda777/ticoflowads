@@ -121,7 +121,7 @@ const BillingPage = () => {
         .eq("user_id", user.id)
         .single();
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           planId,
           tenantId: profile?.tenant_id,
