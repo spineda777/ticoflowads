@@ -121,15 +121,29 @@ const BillingPage = () => {
         .eq("user_id", user.id)
         .single();
 
-      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        body: {
+      // Direct fetch to bypass Lovable proxy
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
           planId,
           tenantId: profile?.tenant_id,
           userEmail: user.email,
-        },
+        }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Error al iniciar pago");
       if (data?.error) throw new Error(data.error);
       if (data?.url) {
         window.location.href = data.url;
@@ -245,3 +259,4 @@ const BillingPage = () => {
 };
 
 export default BillingPage;
+//v2
