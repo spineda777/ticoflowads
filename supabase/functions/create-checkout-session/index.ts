@@ -6,9 +6,9 @@ const corsHeaders = {
 };
 
 const PLANS: Record<string, { priceId: string }> = {
-  starter: { priceId: "price_1TJnh40QKOBv1IMxCBOcY4NI" },
-  pro:     { priceId: "price_1TJnhZ0QKOBv1IMxt6rLjvag" },
-  agency:  { priceId: "price_1TJniD0QKOBv1IMxgF7lA7RP" },
+  starter: { priceId: "price_1TKQEw0QKOBv1IMxwcuUgfQR" },
+  pro:     { priceId: "price_1TKQFF0QKOBv1IMxjNjtg6k1" },
+  agency:  { priceId: "price_1TKQFv0QKOBv1IMxphDMw9sq" },
 };
 
 serve(async (req) => {
@@ -63,4 +63,4 @@ serve(async (req) => {
     });
   }
 });
-//v3
+// v4-live
