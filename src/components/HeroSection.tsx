@@ -123,8 +123,8 @@ const HeroSection = () => (
           >
             <div className="bg-card rounded-xl shadow-md border border-border p-5 max-w-sm mx-auto lg:mx-0 lg:ml-auto">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Target size={14} className="text-blue-600" />
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Target size={14} className="text-primary" />
                 </div>
                 <div>
                   <p className="font-heading font-semibold text-sm text-foreground">Clínica Dental Sonrisa</p>
