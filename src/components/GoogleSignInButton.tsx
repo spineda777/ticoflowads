@@ -1,33 +1,25 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const GoogleSignInButton = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
       });
 
-      if (result.error) {
-        toast.error("Error al iniciar sesión con Google");
+      if (error) {
+        toast.error("Error al iniciar sesión con Google: " + error.message);
         setLoading(false);
-        return;
       }
-
-      if (result.redirected) {
-        // Browser redirects to Google — the auth state will be restored on return
-        // Index.tsx will auto-redirect to /dashboard once session is detected
-        return;
-      }
-
-      // Session set successfully — navigate to dashboard
-      navigate("/dashboard", { replace: true });
+      // Browser will redirect to Google, then back to /dashboard
     } catch {
       toast.error("Error al iniciar sesión con Google");
       setLoading(false);
