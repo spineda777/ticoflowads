@@ -6,6 +6,7 @@ import HeroSection from "@/components/HeroSection";
 import SocialProof from "@/components/SocialProof";
 import HowItWorks from "@/components/HowItWorks";
 import Features from "@/components/Features";
+import ShowcaseExamples from "@/components/ShowcaseExamples";
 import Testimonials from "@/components/Testimonials";
 import Pricing from "@/components/Pricing";
 import FAQ from "@/components/FAQ";
@@ -32,6 +33,7 @@ const Index = () => {
       <SocialProof />
       <HowItWorks />
       <Features />
+      <ShowcaseExamples />
       <Testimonials />
       <Pricing />
       <FAQ />
