@@ -35,21 +35,12 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    
-    // Debug: Log Supabase configuration
-    console.log("[v0] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-    console.log("[v0] Redirect URL:", `${window.location.origin}/dashboard`);
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
       },
     });
-    
-    console.log("[v0] OAuth response data:", data);
-    console.log("[v0] OAuth response error:", error);
-    
     if (error) {
       toast({ title: "Error con Google", description: error.message, variant: "destructive" });
       setGoogleLoading(false);
