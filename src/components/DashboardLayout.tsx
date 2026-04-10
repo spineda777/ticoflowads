@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import Toby from "@/components/Toby";
 import {
   LayoutDashboard, PlusCircle, Megaphone, Settings, Users,
-  CreditCard, Bell, LogOut, Menu, X, ChevronRight, Target
+  CreditCard, Bell, LogOut, Menu, ChevronRight, Target
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -94,11 +95,9 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+      <Toby />
     </div>
   );
-};import Toby from "@/components/Toby";
-
-// Dentro del return, antes del último tag de cierre:
-<Toby />
+};
 
 export default DashboardLayout;

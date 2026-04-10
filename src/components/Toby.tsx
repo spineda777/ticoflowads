@@ -67,27 +67,48 @@ const Toby = () => {
     setLoading(true);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
       const history = [...messages, { role: "user", content: userMsg }]
         .filter(m => m.content !== WELCOME)
         .map(m => ({ role: m.role, content: m.content }));
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/toby-chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "apikey": supabaseKey,
-        },
-        body: JSON.stringify({ messages: history }),
-      });
+      // Try Vercel API first (works in v0 preview), fallback to Supabase Edge Function
+      let response: Response;
+      let useVercelApi = true;
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Error");
+      try {
+        response = await fetch("/api/toby-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history }),
+        });
+        
+        if (!response.ok && response.status === 404) {
+          useVercelApi = false;
+        }
+      } catch {
+        useVercelApi = false;
+      }
+
+      // Fallback to Supabase Edge Function
+      if (!useVercelApi) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+        response = await fetch(`${supabaseUrl}/functions/v1/toby-chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "apikey": supabaseKey,
+          },
+          body: JSON.stringify({ messages: history }),
+        });
+      }
+
+      const data = await response!.json();
+      if (!response!.ok) throw new Error(data.error || "Error");
 
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
     } catch {
