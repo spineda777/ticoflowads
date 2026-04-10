@@ -73,4 +73,7 @@ serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-});
+});import Toby from "@/components/Toby";
+
+// Dentro del return, antes del último tag de cierre:
+<Toby />
