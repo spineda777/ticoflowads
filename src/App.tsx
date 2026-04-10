@@ -28,6 +28,7 @@ import AdminPanel from "./pages/AdminPanel.tsx";
 
 const queryClient = new QueryClient();
 
+// TicoFlowAds v1.0 - Forced deploy trigger
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
