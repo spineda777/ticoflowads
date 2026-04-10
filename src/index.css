@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 60 5% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 60 5% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 5% 11%;
+
+    --primary: 155 61% 15%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 155 58% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 40 7% 95%;
+    --muted-foreground: 60 3% 40%;
+
+    --accent: 142 69% 58%;
+    --accent-foreground: 155 61% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 7% 90%;
+    --input: 40 7% 90%;
+    --ring: 155 61% 15%;
+
+    --radius: 0.75rem;
+
+    --surface-alt: 40 7% 95%;
+    --dark-green: 155 55% 10%;
+    --footer-bg: 157 55% 10%;
+
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Sora', sans-serif;
+  }
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@keyframes scroll-logos {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-logos {
+  animation: scroll-logos 20s linear infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
