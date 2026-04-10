@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index.tsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
+import DataDeletion from "./pages/DataDeletion.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
@@ -39,6 +40,7 @@ const App = () => (
             {/* Public routes - landing page untouched */}
             <Route path="/" element={<Index />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
+            <Route path="/eliminacion-datos" element={<DataDeletion />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

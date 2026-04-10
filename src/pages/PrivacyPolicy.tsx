@@ -59,9 +59,28 @@ const PrivacyPolicy = () => (
         </section>
 
         <section className="mb-8">
+          <h2 className="font-heading font-semibold text-xl text-foreground mb-4">Tus derechos</h2>
+          <p className="text-muted-foreground mb-3">Como usuario, tienes derecho a:</p>
+          <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
+            <li>Acceder a tus datos personales</li>
+            <li>Rectificar datos incorrectos</li>
+            <li>Solicitar la eliminacion de tus datos</li>
+            <li>Exportar tus datos en un formato portable</li>
+            <li>Retirar tu consentimiento en cualquier momento</li>
+          </ul>
+          <p className="text-muted-foreground mt-3">
+            Para ejercer estos derechos, visita nuestra{" "}
+            <a href="/eliminacion-datos" className="text-primary underline hover:text-secondary transition-colors">
+              pagina de eliminacion de datos
+            </a>{" "}
+            o contactanos directamente.
+          </p>
+        </section>
+
+        <section className="mb-8">
           <h2 className="font-heading font-semibold text-xl text-foreground mb-4">Contacto</h2>
           <p className="text-muted-foreground">
-            Si tienes preguntas sobre esta política de privacidad, puedes contactarnos en:{" "}
+            Si tienes preguntas sobre esta politica de privacidad, puedes contactarnos en:{" "}
             <a href="mailto:support@ticoflow.app" className="text-primary underline hover:text-secondary transition-colors">
               support@ticoflow.app
             </a>
