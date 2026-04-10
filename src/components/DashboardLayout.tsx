@@ -6,6 +6,7 @@ import {
   CreditCard, Bell, LogOut, Menu, X, ChevronRight, Target
 } from "lucide-react";
 import ticoflowLogo from "@/assets/ticoflow-logo.png";
+import TobyAI from "@/components/TobyAI";
 
 const sidebarLinks = [
   { label: "Panel", href: "/dashboard", icon: LayoutDashboard },
@@ -89,6 +90,7 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+      <TobyAI variant="dashboard" />
     </div>
   );
 };

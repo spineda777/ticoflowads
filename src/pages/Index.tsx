@@ -11,6 +11,7 @@ import Pricing from "@/components/Pricing";
 import FAQ from "@/components/FAQ";
 import CTAFinal from "@/components/CTAFinal";
 import Footer from "@/components/Footer";
+import TobyAI from "@/components/TobyAI";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ const Index = () => {
       <FAQ />
       <CTAFinal />
       <Footer />
+      <TobyAI variant="landing" />
     </>
   );
 };
