@@ -96,6 +96,9 @@ const DashboardLayout = () => {
       </div>
     </div>
   );
-};
+};import Toby from "@/components/Toby";
+
+// Dentro del return, antes del último tag de cierre:
+<Toby />
 
 export default DashboardLayout;
