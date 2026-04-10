@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ad_id, business_type, description, target_audience, reference_images, style_instructions } = await req.json();
+    const { ad_id, business_type, description, target_audience, style_instructions } = await req.json();
 
     if (!ad_id) {
       return new Response(JSON.stringify({ error: "ad_id is required" }), {
@@ -18,90 +18,39 @@ serve(async (req) => {
       });
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const styleNote = style_instructions ? ` Style: ${style_instructions}.` : "";
-    const baseContext = `Business type: ${business_type || "business"}. ${description || ""}. Target: ${target_audience || "general audience"}.${styleNote}`;
+    const styleNote = style_instructions ? ` ${style_instructions}` : "";
+    const baseContext = `${business_type || "business"}: ${description || ""}. Target: ${target_audience || "general audience"}${styleNote}`;
 
     const imagePrompts = [
-      `Professional social media ad. ${baseContext} Modern, vibrant, clean, commercial quality, high resolution.`,
-      `Eye-catching promotional banner. ${baseContext} Lifestyle shot, warm lighting, inviting, professional photography style.`,
-      `Bold advertising creative. ${baseContext} Minimalist design, strong typography space, premium feel, social media optimized.`,
-      `Dynamic promotional image. ${baseContext} Action-oriented, energetic, colorful, modern graphic design style.`,
-      `Elegant brand advertisement. ${baseContext} Sophisticated, clean background, product-focused, Instagram-ready.`,
+      `Professional social media advertisement for ${baseContext}. Modern, vibrant, clean design, high quality commercial style.`,
+      `Eye-catching promotional banner for ${baseContext}. Warm lighting, inviting atmosphere, professional photography.`,
+      `Bold advertising creative for ${baseContext}. Minimalist design, strong visual impact, premium feel.`,
+      `Dynamic promotional image for ${baseContext}. Action-oriented, energetic colors, modern graphic style.`,
+      `Elegant brand advertisement for ${baseContext}. Sophisticated, clean background, product showcase.`,
     ];
 
     const imageResults = [];
-    const hasReferences = reference_images && reference_images.length > 0;
 
     for (let i = 0; i < imagePrompts.length; i++) {
       try {
-        // Build parts for Gemini
-        const parts: any[] = [];
+        const encodedPrompt = encodeURIComponent(imagePrompts[i]);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
 
-        if (hasReferences) {
-          parts.push({ text: `Using the provided reference images as inspiration, create: ${imagePrompts[i]} Incorporate the brand colors, style and elements from the references.` });
-          for (const refUrl of reference_images) {
-            try {
-              const imgResp = await fetch(refUrl);
-              if (imgResp.ok) {
-                const imgBuffer = await imgResp.arrayBuffer();
-                const base64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
-                const mimeType = imgResp.headers.get("content-type") || "image/png";
-                parts.push({ inlineData: { mimeType, data: base64 } });
-              }
-            } catch (e) {
-              console.error(`Failed to fetch reference image: ${refUrl}`, e);
-            }
-          }
-        } else {
-          parts.push({ text: imagePrompts[i] });
-        }
-
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts }],
-              generationConfig: {
-                responseModalities: ["TEXT", "IMAGE"],
-              },
-            }),
-          }
-        );
-
-        if (!geminiResponse.ok) {
-          console.error(`Image ${i} generation failed:`, geminiResponse.status);
-          if (geminiResponse.status === 429) {
-            await new Promise(r => setTimeout(r, 5000));
-          }
+        const imgResponse = await fetch(imageUrl);
+        if (!imgResponse.ok) {
+          console.error(`Image ${i} fetch failed:`, imgResponse.status);
           continue;
         }
 
-        const geminiData = await geminiResponse.json();
-        const candidateParts = geminiData.candidates?.[0]?.content?.parts || [];
-        const imagePart = candidateParts.find((p: any) => p.inlineData);
-
-        if (!imagePart?.inlineData) {
-          console.error(`Image ${i}: no image in response`);
-          continue;
-        }
-
-        const { mimeType, data: base64Data } = imagePart.inlineData;
-        const ext = mimeType === "image/jpeg" ? "jpg" : "png";
-        const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-
-        const filePath = `${ad_id}/image_${i}_${Date.now()}.${ext}`;
+        const imgBuffer = await imgResponse.arrayBuffer();
+        const filePath = `${ad_id}/image_${i}_${Date.now()}.png`;
         const { error: uploadError } = await supabase.storage
           .from("ad-images")
-          .upload(filePath, binaryData, { contentType: mimeType, upsert: true });
+          .upload(filePath, imgBuffer, { contentType: "image/png", upsert: true });
 
         if (uploadError) {
           console.error(`Image ${i} upload error:`, uploadError);
@@ -126,7 +75,7 @@ serve(async (req) => {
         console.log(`Image ${i} generated and saved successfully`);
 
         if (i < imagePrompts.length - 1) {
-          await new Promise(r => setTimeout(r, 3000));
+          await new Promise(r => setTimeout(r, 2000));
         }
       } catch (imgErr) {
         console.error(`Image ${i} error:`, imgErr);
